@@ -1,1 +1,563 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Receipt Uploader</title>
+    <style>
+        :root {
+            --primary: #2c6bed;
+            --primary-light: #4d8bff;
+            --primary-dark: #1a4da6;
+            --error: #e74c3c;
+            --success: #2ecc71;
+            --gray-light: #f4f4f4;
+            --gray: #e0e0e0;
+            --gray-dark: #888;
+            --text: #333;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: var(--text);
+            background-color: var(--gray-light);
+            margin: 0;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            color: var(--primary-dark);
+            margin-top: 0;
+            text-align: center;
+        }
+        
+        .upload-area {
+            border: 2px dashed var(--gray);
+            border-radius: 8px;
+            padding: 40px 20px;
+            text-align: center;
+            margin-bottom: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .upload-area:hover, .upload-area.drag-over {
+            border-color: var(--primary);
+            background-color: rgba(44, 107, 237, 0.05);
+        }
+        
+        .upload-area i {
+            font-size: 48px;
+            color: var(--gray-dark);
+            margin-bottom: 10px;
+        }
+        
+        .upload-area p {
+            margin: 0;
+            color: var(--gray-dark);
+        }
+        
+        .upload-area p.small {
+            font-size: 14px;
+            margin-top: 8px;
+        }
+        
+        .file-input {
+            display: none;
+        }
+        
+        .btn {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s ease;
+        }
+        
+        .btn:hover {
+            background-color: var(--primary-dark);
+        }
+        
+        .btn:disabled {
+            background-color: var(--gray);
+            cursor: not-allowed;
+        }
+        
+        .receipt-preview {
+            margin-bottom: 20px;
+            display: none;
+        }
+        
+        .receipt-preview img {
+            max-width: 100%;
+            border-radius: 4px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+        
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid var(--gray);
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        
+        .form-group input:focus, .form-group select:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+        
+        .status {
+            padding: 15px;
+            border-radius: 4px;
+            margin-top: 20px;
+            display: none;
+        }
+        
+        .status.success {
+            background-color: rgba(46, 204, 113, 0.1);
+            border: 1px solid var(--success);
+            color: var(--success);
+        }
+        
+        .status.error {
+            background-color: rgba(231, 76, 60, 0.1);
+            border: 1px solid var(--error);
+            color: var(--error);
+        }
+        
+        .progress {
+            height: 10px;
+            margin-top: 20px;
+            border-radius: 5px;
+            background-color: var(--gray);
+            overflow: hidden;
+            display: none;
+        }
+        
+        .progress-bar {
+            height: 100%;
+            background-color: var(--primary);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+        
+        .store-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .store-option {
+            border: 1px solid var(--gray);
+            border-radius: 4px;
+            padding: 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .store-option:hover {
+            border-color: var(--primary-light);
+        }
+        
+        .store-option.selected {
+            border-color: var(--primary);
+            background-color: rgba(44, 107, 237, 0.1);
+        }
+        
+        .store-option img {
+            max-width: 100%;
+            height: 40px;
+            object-fit: contain;
+            margin-bottom: 5px;
+        }
+        
+        .receipt-list {
+            margin-top: 30px;
+            border-top: 1px solid var(--gray);
+            padding-top: 20px;
+        }
+        
+        .receipt-item {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            border: 1px solid var(--gray);
+            border-radius: 4px;
+            margin-bottom: 10px;
+        }
+        
+        .receipt-item img {
+            width: 50px;
+            height: 50px;
+            object-fit: cover;
+            border-radius: 4px;
+            margin-right: 15px;
+        }
+        
+        .receipt-item-details {
+            flex-grow: 1;
+        }
+        
+        .receipt-item-details h3 {
+            margin: 0 0 5px 0;
+            font-size: 16px;
+        }
+        
+        .receipt-item-details p {
+            margin: 0;
+            color: var(--gray-dark);
+            font-size: 14px;
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 50px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        
+        .badge-success {
+            background-color: rgba(46, 204, 113, 0.1);
+            color: var(--success);
+        }
+        
+        .badge-pending {
+            background-color: rgba(241, 196, 15, 0.1);
+            color: #f1c40f;
+        }
+        
+        .loader {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(44, 107, 237, 0.2);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
+            vertical-align: middle;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        @media (max-width: 600px) {
+            .container {
+                padding: 20px;
+            }
+            
+            .store-list {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Receipt Uploader</h1>
+        
+        <div class="upload-area" id="uploadArea">
+            <i>📸</i>
+            <p>Drag & drop your receipt image here</p>
+            <p class="small">or</p>
+            <button class="btn" id="selectFileBtn">Select File</button>
+            <p class="small">Supported formats: JPG, PNG, PDF</p>
+            <input type="file" class="file-input" id="fileInput" accept="image/jpeg,image/png,application/pdf">
+        </div>
+        
+        <div class="receipt-preview" id="receiptPreview">
+            <img id="previewImage" src="" alt="Receipt preview">
+        </div>
+        
+        <form id="receiptForm">
+            <div class="form-group">
+                <label>Store</label>
+                <div class="store-list">
+                    <div class="store-option" data-store="target">
+                        <img src="/api/placeholder/100/40" alt="Target">
+                        <div>Target</div>
+                    </div>
+                    <div class="store-option" data-store="homedepot">
+                        <img src="/api/placeholder/100/40" alt="Home Depot">
+                        <div>Home Depot</div>
+                    </div>
+                    <div class="store-option" data-store="bestbuy">
+                        <img src="/api/placeholder/100/40" alt="Best Buy">
+                        <div>Best Buy</div>
+                    </div>
+                    <div class="store-option" data-store="cvs">
+                        <img src="/api/placeholder/100/40" alt="CVS">
+                        <div>CVS</div>
+                    </div>
+                    <div class="store-option" data-store="riteaid">
+                        <img src="/api/placeholder/100/40" alt="Rite Aid">
+                        <div>Rite Aid</div>
+                    </div>
+                    <div class="store-option" data-store="safeway">
+                        <img src="/api/placeholder/100/40" alt="Safeway">
+                        <div>Safeway</div>
+                    </div>
+                    <div class="store-option" data-store="other">
+                        <img src="/api/placeholder/100/40" alt="Other">
+                        <div>Other</div>
+                    </div>
+                </div>
+                <input type="hidden" id="selectedStore" name="store">
+            </div>
+            
+            <div class="form-group">
+                <label for="purchaseDate">Purchase Date</label>
+                <input type="date" id="purchaseDate" name="purchaseDate" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="totalAmount">Total Amount ($)</label>
+                <input type="number" id="totalAmount" name="totalAmount" min="0" step="0.01" placeholder="0.00" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="notes">Notes (Optional)</label>
+                <input type="text" id="notes" name="notes" placeholder="Add any notes about this receipt">
+            </div>
+            
+            <button type="submit" class="btn" id="uploadBtn" disabled>Upload Receipt</button>
+        </form>
+        
+        <div class="progress" id="progressBar">
+            <div class="progress-bar" id="progressBarFill"></div>
+        </div>
+        
+        <div class="status" id="statusMessage"></div>
+        
+        <div class="receipt-list" id="receiptList">
+            <!-- Receipt items will be dynamically added here -->
+        </div>
+    </div>
 
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const uploadArea = document.getElementById('uploadArea');
+            const fileInput = document.getElementById('fileInput');
+            const selectFileBtn = document.getElementById('selectFileBtn');
+            const receiptPreview = document.getElementById('receiptPreview');
+            const previewImage = document.getElementById('previewImage');
+            const uploadBtn = document.getElementById('uploadBtn');
+            const progressBar = document.getElementById('progressBar');
+            const progressBarFill = document.getElementById('progressBarFill');
+            const statusMessage = document.getElementById('statusMessage');
+            const receiptForm = document.getElementById('receiptForm');
+            const storeOptions = document.querySelectorAll('.store-option');
+            const selectedStoreInput = document.getElementById('selectedStore');
+            
+            // Store selection
+            storeOptions.forEach(option => {
+                option.addEventListener('click', function() {
+                    storeOptions.forEach(opt => opt.classList.remove('selected'));
+                    this.classList.add('selected');
+                    selectedStoreInput.value = this.getAttribute('data-store');
+                    validateForm();
+                });
+            });
+            
+            // File select button
+            selectFileBtn.addEventListener('click', function() {
+                fileInput.click();
+            });
+            
+            // File input change
+            fileInput.addEventListener('change', handleFileSelect);
+            
+            // Drag and drop events
+            uploadArea.addEventListener('dragover', function(e) {
+                e.preventDefault();
+                this.classList.add('drag-over');
+            });
+            
+            uploadArea.addEventListener('dragleave', function() {
+                this.classList.remove('drag-over');
+            });
+            
+            uploadArea.addEventListener('drop', function(e) {
+                e.preventDefault();
+                this.classList.remove('drag-over');
+                
+                if (e.dataTransfer.files.length) {
+                    fileInput.files = e.dataTransfer.files;
+                    handleFileSelect();
+                }
+            });
+            
+            // Form validation
+            function validateForm() {
+                const fileSelected = fileInput.files.length > 0;
+                const storeSelected = selectedStoreInput.value !== '';
+                const dateSelected = document.getElementById('purchaseDate').value !== '';
+                const amountEntered = document.getElementById('totalAmount').value !== '';
+                
+                uploadBtn.disabled = !(fileSelected && storeSelected && dateSelected && amountEntered);
+            }
+            
+            document.getElementById('purchaseDate').addEventListener('change', validateForm);
+            document.getElementById('totalAmount').addEventListener('input', validateForm);
+            
+            // Handle file selection
+            function handleFileSelect() {
+                if (fileInput.files.length > 0) {
+                    const file = fileInput.files[0];
+                    
+                    // Check if file is an image
+                    if (file.type.match('image.*') || file.type === 'application/pdf') {
+                        const reader = new FileReader();
+                        
+                        reader.onload = function(e) {
+                            if (file.type === 'application/pdf') {
+                                // For PDF, show a placeholder
+                                previewImage.src = '/api/placeholder/400/320';
+                            } else {
+                                previewImage.src = e.target.result;
+                            }
+                            receiptPreview.style.display = 'block';
+                            validateForm();
+                        };
+                        
+                        reader.readAsDataURL(file);
+                    } else {
+                        showStatus('Please select a valid image or PDF file.', 'error');
+                    }
+                }
+            }
+            
+            // Form submission
+            receiptForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const formData = new FormData(receiptForm);
+                formData.append('receiptFile', fileInput.files[0]);
+                
+                // Show progress
+                progressBar.style.display = 'block';
+                statusMessage.style.display = 'none';
+                uploadBtn.disabled = true;
+                
+                // Simulate upload progress
+                let progress = 0;
+                const interval = setInterval(function() {
+                    progress += 5;
+                    progressBarFill.style.width = progress + '%';
+                    
+                    if (progress >= 100) {
+                        clearInterval(interval);
+                        // Simulate server processing time
+                        setTimeout(function() {
+                            // Mock API call success
+                            showStatus('Receipt uploaded successfully!', 'success');
+                            addReceiptToList(formData);
+                            resetForm();
+                        }, 500);
+                    }
+                }, 100);
+                
+                // In production code, you would make an actual API call here:
+                /*
+                fetch('/api/receipts', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    showStatus('Receipt uploaded successfully!', 'success');
+                    addReceiptToList(data);
+                    resetForm();
+                })
+                .catch(error => {
+                    showStatus('Error uploading receipt: ' + error.message, 'error');
+                })
+                .finally(() => {
+                    progressBar.style.display = 'none';
+                    uploadBtn.disabled = false;
+                });
+                */
+            });
+            
+            // Show status message
+            function showStatus(message, type) {
+                statusMessage.textContent = message;
+                statusMessage.className = 'status ' + type;
+                statusMessage.style.display = 'block';
+                progressBar.style.display = 'none';
+            }
+            
+            // Reset form after submission
+            function resetForm() {
+                fileInput.value = '';
+                receiptPreview.style.display = 'none';
+                document.querySelectorAll('.store-option').forEach(opt => opt.classList.remove('selected'));
+                selectedStoreInput.value = '';
+                receiptForm.reset();
+                uploadBtn.disabled = true;
+            }
+            
+            // Add receipt to list
+            function addReceiptToList(formData) {
+                const receiptList = document.getElementById('receiptList');
+                
+                // Get store name
+                const storeData = formData.get('store');
+                const storeElement = document.querySelector(`.store-option[data-store="${storeData}"]`);
+                const storeName = storeElement ? storeElement.querySelector('div').textContent : 'Unknown Store';
+                
+                // Create receipt item
+                const receiptItem = document.createElement('div');
+                receiptItem.className = 'receipt-item';
+                
+                const date = new Date(formData.get('purchaseDate')).toLocaleDateString();
+                const amount = parseFloat(formData.get('totalAmount')).toFixed(2);
+                
+                receiptItem.innerHTML = `
+                    <img src="/api/placeholder/50/50" alt="Receipt thumbnail">
+                    <div class="receipt-item-details">
+                        <h3>${storeName} - $${amount}</h3>
+                        <p>Date: ${date}</p>
+                    </div>
+                    <span class="badge badge-success">Processed</span>
+                `;
+                
+                receiptList.prepend(receiptItem);
+            }
+        });
+    </script>
+</body>
+</html>
