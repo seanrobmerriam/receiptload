@@ -38,7 +38,7 @@ receipt-uploader/
 
 1. Clone the repository
    ```
-   git clone https://github.com/yourusername/receipt-uploader.git
+   git clone https://github.com/seanrobmerriam/receipt-uploader.git
    cd receipt-uploader
    ```
 
