@@ -88,8 +88,8 @@ The backend is written in Go and uses:
 
 ## License
 
-MIT
+GNU General Public License v3.0
 
 ## Support
 
-For support or questions, please contact [your-email@example.com](mailto:
+For support or questions, please contact seanrobmerriam@gmail.com(mailto:
